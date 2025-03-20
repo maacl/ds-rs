@@ -7,14 +7,10 @@ use {
         futures::Stream,
         get, launch,
         response::{content::RawHtml, stream::stream},
-        routes, State,
+        routes,
     },
     serde::Serialize,
-    std::{
-        sync::{Arc, RwLock},
-        thread::sleep,
-        time::Duration,
-    },
+    std::{thread::sleep, time::Duration},
     templates::page_dbmon,
 };
 
@@ -86,7 +82,7 @@ impl DbmonDatabases {
         let mut databases = Vec::with_capacity(n * 2);
         for i in 0..n {
             databases.push(DbmonDatabase::new(format!("cluster{}", i)));
-            databases.push(DbmonDatabase::new(format!("cluster{}slave", i)));
+            databases.push(DbmonDatabase::new(format!("cluster{}follower", i)));
         }
         DbmonDatabases { databases }
     }
@@ -118,36 +114,6 @@ fn index() -> RawHtml<String> {
     RawHtml(INDEX.into())
 }
 
-#[get("/dbmon/contents")]
-fn dbmon_contents(
-    dbs: &State<Arc<RwLock<DbmonDatabases>>>,
-) -> Sse<impl Stream<Item = DatastarEvent>> {
-    let dbs = dbs.read().unwrap();
-
-    // Precompute data for the template
-    let dbs_with_data: Vec<_> = dbs
-        .databases
-        .iter()
-        .map(|db| {
-            let counter_classes = dbmon_counter_classes(db.queries.len());
-            let top5_queries = db.top5_queries();
-            DatabaseWithData {
-                name: db.name.clone(),
-                query_count: db.queries.len(),
-                counter_classes,
-                top5_queries,
-            }
-        })
-        .collect();
-
-    let content = page_dbmon(dbs_with_data);
-
-    Sse(stream! {
-      // Merges HTML fragments into the DOM.
-      yield MergeFragments::new(content).into()
-    })
-}
-
 // Helper struct to hold precomputed data for the template
 #[derive(Serialize, Debug)]
 struct DatabaseWithData {
@@ -157,8 +123,8 @@ struct DatabaseWithData {
     top5_queries: Vec<DbmonQuery>,
 }
 
-#[get("/dbmon/updates")]
-fn dbmon_updates() -> Sse<impl Stream<Item = DatastarEvent>> {
+#[get("/updates")]
+fn updates() -> Sse<impl Stream<Item = DatastarEvent>> {
     let mut dbs = DbmonDatabases::new(6);
 
     Sse(stream! {
@@ -188,5 +154,5 @@ fn dbmon_updates() -> Sse<impl Stream<Item = DatastarEvent>> {
 
 #[launch]
 fn rocket() -> _ {
-    rocket::build().mount("/", routes![index, dbmon_contents, dbmon_updates])
+    rocket::build().mount("/", routes![index, updates])
 }

@@ -5,7 +5,7 @@ pub fn page_dbmon(dbs: Vec<crate::DatabaseWithData>) -> maud::Markup {
         div
             id="contents"
             class="flex flex-col gap-4 p-4 w-full overflow-scroll"
-            data-on-load="@get('/dbmon/updates')"
+            data-on-load="@get('/updates')"
         {
             div id="dbmon" {
                 (dbmon_app(dbs))
