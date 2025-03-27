@@ -11,7 +11,7 @@ use {
     },
     serde::Serialize,
     std::{thread::sleep, time::Duration},
-    templates::page_dbmon,
+    templates::dbmon_app,
 };
 
 #[derive(Clone, Debug, Serialize)]
@@ -144,10 +144,10 @@ fn updates() -> Sse<impl Stream<Item = DatastarEvent>> {
                 }
                 })
                 .collect();
-            let content = page_dbmon(dbs_with_data);
+              let content = dbmon_app(dbs_with_data);
 
             yield MergeFragments::new(content).into();
-            sleep(Duration::from_millis(100));
+            sleep(Duration::from_millis(5));
         }
     })
 }

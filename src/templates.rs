@@ -1,20 +1,6 @@
 use maud::html;
 
-pub fn page_dbmon(dbs: Vec<crate::DatabaseWithData>) -> maud::Markup {
-    html! {
-        div
-            id="contents"
-            class="flex flex-col gap-4 p-4 w-full overflow-scroll"
-            data-on-load="@get('/updates')"
-        {
-            div id="dbmon" {
-                (dbmon_app(dbs))
-            }
-        }
-    }
-}
-
-fn dbmon_app(dbs: Vec<crate::DatabaseWithData>) -> maud::Markup {
+pub fn dbmon_app(dbs: Vec<crate::DatabaseWithData>) -> maud::Markup {
     html! {
         table id="app" class="table table-xs w-full" {
             tbody {
